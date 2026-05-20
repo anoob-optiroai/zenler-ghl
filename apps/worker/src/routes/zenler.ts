@@ -21,6 +21,8 @@ const zenlerRoutes: FastifyPluginAsync = async (app) => {
     const eventKey = detectZenlerEvent(payload)
 
     if (!eventKey) {
+      // Log unrecognised payloads so we can see what Zenler is sending
+      console.log('[zenler] unrecognised payload — raw body:', JSON.stringify(payload))
       return reply.status(200).send({ received: true, note: 'Unknown event type — ignored' })
     }
 
