@@ -86,8 +86,10 @@ export default function ConnectPage() {
     }
   }
 
+  const workerUrl = process.env.NEXT_PUBLIC_WORKER_URL || 'http://localhost:3001'
+
   const copyWebhookUrl = () => {
-    const url = `${window.location.origin.replace('3000', '3001')}/wh/zenler/${connection?.zenlerWebhookToken}`
+    const url = `${workerUrl}/wh/zenler/${connection?.zenlerWebhookToken}`
     navigator.clipboard.writeText(url)
     toast.success('Webhook URL copied!')
   }
@@ -227,9 +229,7 @@ export default function ConnectPage() {
             </p>
             <div className="flex items-center gap-3">
               <code className="flex-1 text-xs text-green-300 bg-white/5 px-4 py-2.5 rounded-lg truncate">
-                {typeof window !== 'undefined'
-                  ? `${window.location.origin.replace('3000', '3001')}/wh/zenler/${connection.zenlerWebhookToken}`
-                  : `/wh/zenler/${connection.zenlerWebhookToken}`}
+                {`${workerUrl}/wh/zenler/${connection.zenlerWebhookToken}`}
               </code>
               <button
                 type="button"
