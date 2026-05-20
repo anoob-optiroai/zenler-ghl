@@ -24,7 +24,8 @@ export async function processEvent(job: EventJob) {
 
   // Check if this event is enabled
   const config = connection.eventConfigs.find(
-    (c) => c.eventKey === eventKey && c.direction === direction && c.isEnabled
+    (c: { eventKey: string; direction: string; isEnabled: boolean }) =>
+      c.eventKey === eventKey && c.direction === direction && c.isEnabled
   )
 
   if (!config) {

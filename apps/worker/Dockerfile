@@ -2,22 +2,23 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy root workspace files
+# Copy root workspace manifest + worker manifest
 COPY package.json ./
 COPY apps/worker/package.json ./apps/worker/
+
+# Copy Prisma schema (shared between web + worker)
 COPY apps/web/prisma ./apps/web/prisma/
 
-# Install deps
+# Install worker dependencies
 RUN npm install --workspace=apps/worker
 
-# Generate Prisma client
+# Generate Prisma client pointing at the web schema
 RUN npx prisma generate --schema=./apps/web/prisma/schema.prisma
 
-# Copy worker source
+# Copy source & build
 COPY apps/worker/src ./apps/worker/src
 COPY apps/worker/tsconfig.json ./apps/worker/
 
-# Build
 RUN cd apps/worker && npx tsc
 
 EXPOSE 3001

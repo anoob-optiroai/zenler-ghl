@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify'
 import { prisma } from '../lib/prisma'
-import { eventQueue } from '../queue'
+import { getQueue } from '../queue'
 
 const ghlRoutes: FastifyPluginAsync = async (app) => {
   // GHL sends POST to /wh/ghl/:token
@@ -33,7 +33,7 @@ const ghlRoutes: FastifyPluginAsync = async (app) => {
       },
     })
 
-    await eventQueue.add(
+    await getQueue().add(
       eventKey,
       {
         connectionId: connection.id,

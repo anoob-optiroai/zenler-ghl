@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify'
 import { prisma } from '../lib/prisma'
-import { eventQueue } from '../queue'
+import { getQueue } from '../queue'
 
 const zenlerRoutes: FastifyPluginAsync = async (app) => {
   // Zenler sends POST to /wh/zenler/:token
@@ -36,7 +36,7 @@ const zenlerRoutes: FastifyPluginAsync = async (app) => {
     })
 
     // Enqueue for processing
-    await eventQueue.add(
+    await getQueue().add(
       eventKey,
       {
         connectionId: connection.id,

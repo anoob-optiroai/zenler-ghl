@@ -1,4 +1,10 @@
-import { Connection } from '@prisma/client'
+// Connection type inlined to avoid Prisma client version mismatch
+interface Connection {
+  ghlApiKey: string
+  ghlLocationId: string
+  zenlerApiKey?: string | null
+  zenlerDomain?: string | null
+}
 import {
   ghlUpsertContact,
   ghlAddTags,

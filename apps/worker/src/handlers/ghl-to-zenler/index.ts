@@ -1,4 +1,9 @@
-import { Connection } from '@prisma/client'
+interface Connection {
+  ghlApiKey: string
+  ghlLocationId: string
+  zenlerApiKey?: string | null
+  zenlerDomain?: string | null
+}
 import {
   zenlerRegisterUser,
   zenlerEnrollUser,
