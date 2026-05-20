@@ -5,6 +5,9 @@ import { Activity, CheckCircle2, AlertCircle, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 
+// Force dynamic rendering — this page reads session + DB at request time
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
   const userId = (session?.user as any)?.id
