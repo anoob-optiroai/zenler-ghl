@@ -29,7 +29,7 @@ export default async function DashboardPage() {
   const failedLogs = await prisma.eventLog.count({
     where: { connectionId: connection?.id, status: 'FAILED' },
   })
-  const activeEvents = connection?.eventConfigs.filter((e) => e.isEnabled).length ?? 0
+  const activeEvents = connection?.eventConfigs.filter((e: { isEnabled: boolean }) => e.isEnabled).length ?? 0
 
   const stats = [
     { label: 'Total Events', value: totalLogs.toLocaleString(), icon: Zap, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
@@ -87,7 +87,7 @@ export default async function DashboardPage() {
           </div>
         ) : (
           <div className="divide-y divide-white/5">
-            {connection.eventLogs.map((log) => (
+            {connection.eventLogs.map((log: any) => (
               <div key={log.id} className="flex items-center justify-between px-6 py-3 hover:bg-white/[0.02] transition-colors">
                 <div className="flex items-center gap-4">
                   <span
