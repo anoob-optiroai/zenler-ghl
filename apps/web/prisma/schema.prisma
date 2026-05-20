@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  password    String
+  name        String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  connections Connection[]
+}
+
+model Connection {
+  id               String        @id @default(cuid())
+  userId           String
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Zenler credentials
+  zenlerApiKey     String?
+  zenlerDomain     String?       // e.g. myschool.newzenler.com
+  zenlerWebhookToken String      @unique @default(cuid())
+
+  // GHL credentials
+  ghlApiKey        String
+  ghlLocationId    String
+
+  // Status
+  isActive         Boolean       @default(true)
+  lastSyncAt       DateTime?
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  eventConfigs     EventConfig[]
+  eventLogs        EventLog[]
+}
+
+model EventConfig {
+  id            String     @id @default(cuid())
+  connectionId  String
+  connection    Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  eventKey      String     // e.g. "enrollment.created"
+  direction     Direction  // ZENLER_TO_GHL | GHL_TO_ZENLER
+  isEnabled     Boolean    @default(true)
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@unique([connectionId, eventKey, direction])
+}
+
+model EventLog {
+  id            String      @id @default(cuid())
+  connectionId  String
+  connection    Connection  @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  eventKey      String
+  direction     Direction
+  status        LogStatus   @default(PENDING)
+  payload       Json?
+  response      Json?
+  errorMessage  String?
+  retryCount    Int         @default(0)
+
+  createdAt     DateTime    @default(now())
+  processedAt   DateTime?
+}
+
+enum Direction {
+  ZENLER_TO_GHL
+  GHL_TO_ZENLER
+}
+
+enum LogStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  RETRYING
+}
