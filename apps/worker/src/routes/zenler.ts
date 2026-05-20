@@ -7,6 +7,7 @@ const zenlerRoutes: FastifyPluginAsync = async (app) => {
   app.post<{ Params: { token: string } }>('/:token', async (request, reply) => {
     const { token } = request.params
     const payload = request.body as any
+    console.log('[zenler] incoming webhook — token:', token, '| body:', JSON.stringify(payload))
 
     // Lookup connection by webhook token
     const connection = await prisma.connection.findFirst({
@@ -59,6 +60,7 @@ function detectZenlerEvent(payload: any): string | null {
   const type = payload.event || payload.type || payload.event_type
 
   const mapping: Record<string, string> = {
+    // Zenler account-level webhook event names
     'user_registered': 'user.registered',
     'new_enrollment': 'enrollment.created',
     'enrollment_created': 'enrollment.created',
@@ -71,9 +73,23 @@ function detectZenlerEvent(payload: any): string | null {
     'subscription_cancelled': 'subscription.cancelled',
     'certificate_issued': 'certificate.issued',
     'quiz_passed': 'quiz.passed',
+    // Zenler course automation trigger names (camelCase)
+    'OnEnroll': 'enrollment.created',
+    'onenroll': 'enrollment.created',
+    'OnCourseComplete': 'course.completed',
+    'oncoursecomplete': 'course.completed',
+    'OnLessonComplete': 'lesson.completed',
+    'onlessoncomplete': 'lesson.completed',
+    'OnQuizComplete': 'quiz.passed',
+    'onquizcomplete': 'quiz.passed',
+    'OnCertificateIssued': 'certificate.issued',
+    'oncertificateissued': 'certificate.issued',
+    'OnUnenroll': 'enrollment.cancelled',
+    'onunenroll': 'enrollment.cancelled',
   }
 
-  return mapping[type] || null
+  // Also check lowercased version for case-insensitive matching
+  return mapping[type] || mapping[type?.toLowerCase()] || null
 }
 
 export default zenlerRoutes
