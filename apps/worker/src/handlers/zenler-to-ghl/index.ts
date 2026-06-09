@@ -38,7 +38,12 @@ export async function handleZenlerToGhl(
 
     case 'enrollment.created': {
       const courseName = payload.CourseName || payload.course?.title || payload.course_title || 'Unknown Course'
-      const contact = await ghlUpsertContact(ghlApiKey, ghlLocationId, { email, firstName, lastName })
+      // Only pass name fields if they have actual values
+      const contact = await ghlUpsertContact(ghlApiKey, ghlLocationId, {
+        email,
+        ...(firstName && { firstName }),
+        ...(lastName && { lastName }),
+      })
       const contactId = contact?.contact?.id || contact?.id
       if (contactId) {
         await ghlAddTags(ghlApiKey, contactId, [
@@ -67,6 +72,8 @@ export async function handleZenlerToGhl(
       if (contact?.id) {
         const progress = payload.progress_percentage || ''
         await ghlUpdateContact(ghlApiKey, contact.id, {
+          ...(firstName && { firstName }),
+          ...(lastName && { lastName }),
           customFields: [{ key: 'zenler_lesson_progress', field_value: String(progress) }],
         })
         await ghlAddTags(ghlApiKey, contact.id, ['zenler-lesson-completed'])
@@ -77,7 +84,13 @@ export async function handleZenlerToGhl(
     case 'course.completed': {
       const contact = await ghlGetContactByEmail(ghlApiKey, ghlLocationId, email)
       if (contact?.id) {
-        const courseName = payload.course?.title || ''
+        const courseName = payload.CourseName || payload.course?.title || ''
+        if (firstName || lastName) {
+          await ghlUpdateContact(ghlApiKey, contact.id, {
+            ...(firstName && { firstName }),
+            ...(lastName && { lastName }),
+          })
+        }
         await ghlAddTags(ghlApiKey, contact.id, [
           'zenler-course-completed',
           `completed-${slugify(courseName)}`,
