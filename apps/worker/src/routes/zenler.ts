@@ -57,39 +57,48 @@ const zenlerRoutes: FastifyPluginAsync = async (app) => {
 
 // Zenler webhook payload event detection
 function detectZenlerEvent(payload: any): string | null {
+  // 1. Try explicit event type field (account-level webhooks)
   const type = payload.event || payload.type || payload.event_type
-
-  const mapping: Record<string, string> = {
-    // Zenler account-level webhook event names
-    'user_registered': 'user.registered',
-    'new_enrollment': 'enrollment.created',
-    'enrollment_created': 'enrollment.created',
-    'enrollment_cancelled': 'enrollment.cancelled',
-    'lesson_completed': 'lesson.completed',
-    'course_completed': 'course.completed',
-    'payment_received': 'payment.received',
-    'payment_success': 'payment.received',
-    'payment_failed': 'payment.failed',
-    'subscription_cancelled': 'subscription.cancelled',
-    'certificate_issued': 'certificate.issued',
-    'quiz_passed': 'quiz.passed',
-    // Zenler course automation trigger names (camelCase)
-    'OnEnroll': 'enrollment.created',
-    'onenroll': 'enrollment.created',
-    'OnCourseComplete': 'course.completed',
-    'oncoursecomplete': 'course.completed',
-    'OnLessonComplete': 'lesson.completed',
-    'onlessoncomplete': 'lesson.completed',
-    'OnQuizComplete': 'quiz.passed',
-    'onquizcomplete': 'quiz.passed',
-    'OnCertificateIssued': 'certificate.issued',
-    'oncertificateissued': 'certificate.issued',
-    'OnUnenroll': 'enrollment.cancelled',
-    'onunenroll': 'enrollment.cancelled',
+  if (type) {
+    const mapping: Record<string, string> = {
+      'user_registered': 'user.registered',
+      'new_enrollment': 'enrollment.created',
+      'enrollment_created': 'enrollment.created',
+      'enrollment_cancelled': 'enrollment.cancelled',
+      'lesson_completed': 'lesson.completed',
+      'course_completed': 'course.completed',
+      'payment_received': 'payment.received',
+      'payment_success': 'payment.received',
+      'payment_failed': 'payment.failed',
+      'subscription_cancelled': 'subscription.cancelled',
+      'certificate_issued': 'certificate.issued',
+      'quiz_passed': 'quiz.passed',
+      'OnEnroll': 'enrollment.created',
+      'OnCourseComplete': 'course.completed',
+      'OnLessonComplete': 'lesson.completed',
+      'OnQuizComplete': 'quiz.passed',
+      'OnCertificateIssued': 'certificate.issued',
+      'OnUnenroll': 'enrollment.cancelled',
+    }
+    return mapping[type] || mapping[type?.toLowerCase()] || null
   }
 
-  // Also check lowercased version for case-insensitive matching
-  return mapping[type] || mapping[type?.toLowerCase()] || null
+  // 2. Zenler course automation sends NO event field — detect from payload structure
+  //    Fields are PascalCase: Email, Name, LastName, CourseName, CourseId, EnrollmentDate
+  if (payload.Email || payload.email) {
+    if (payload.EnrollmentDate || payload.CourseId) return 'enrollment.created'
+    if (payload.CompletionDate || payload.CompletedAt) return 'course.completed'
+    if (payload.LessonName || payload.LessonId) return 'lesson.completed'
+    if (payload.CertificateUrl || payload.CertificateId) return 'certificate.issued'
+    if (payload.QuizName || payload.QuizScore || payload.Score) return 'quiz.passed'
+    if (payload.TransactionId || payload.PaidAmount) return 'payment.received'
+    // Fallback: any payload with Email+CourseId is treated as enrollment
+    if (payload.CourseId || payload.CourseName) return 'enrollment.created'
+    // Payload with just Email = user registration
+    return 'user.registered'
+  }
+
+  return null
 }
 
 export default zenlerRoutes

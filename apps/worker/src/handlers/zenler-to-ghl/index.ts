@@ -22,9 +22,10 @@ export async function handleZenlerToGhl(
   const { ghlApiKey, ghlLocationId } = connection
 
   // Extract common user fields from Zenler payload
-  const email = payload.email || payload.user?.email
-  const firstName = payload.first_name || payload.user?.first_name || ''
-  const lastName = payload.last_name || payload.user?.last_name || ''
+  // Zenler course automation uses PascalCase; account-level webhooks use snake_case
+  const email = payload.Email || payload.email || payload.user?.email
+  const firstName = payload.Name || payload.first_name || payload.user?.first_name || ''
+  const lastName = payload.LastName || payload.last_name || payload.user?.last_name || ''
 
   switch (eventKey) {
     case 'user.registered':
@@ -36,7 +37,7 @@ export async function handleZenlerToGhl(
       })
 
     case 'enrollment.created': {
-      const courseName = payload.course?.title || payload.course_title || 'Unknown Course'
+      const courseName = payload.CourseName || payload.course?.title || payload.course_title || 'Unknown Course'
       const contact = await ghlUpsertContact(ghlApiKey, ghlLocationId, { email, firstName, lastName })
       const contactId = contact?.contact?.id || contact?.id
       if (contactId) {
