@@ -2,6 +2,7 @@
 import 'dotenv/config'
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import formbody from '@fastify/formbody'
 import zenlerRoutes from './routes/zenler'
 import ghlRoutes from './routes/ghl'
 import { initQueue, startWorker } from './queue'
@@ -13,6 +14,7 @@ let queueReady = false
 
 async function bootstrap() {
   await app.register(cors, { origin: true })
+  await app.register(formbody) // Zenler sends webhooks as application/x-www-form-urlencoded
 
   // ── Health check registered FIRST so Railway healthcheck passes
   //    immediately after the HTTP server binds, even before Redis connects
