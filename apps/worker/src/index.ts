@@ -16,6 +16,7 @@ async function bootstrap() {
 
   // ── Health check registered FIRST so Railway healthcheck passes
   //    immediately after the HTTP server binds, even before Redis connects
+  app.get('/', async () => ({ status: 'ok', service: 'zenler-ghl-worker' }))
   app.get('/health', async () => ({
     status: 'ok',
     queue: queueReady ? 'connected' : 'connecting',
