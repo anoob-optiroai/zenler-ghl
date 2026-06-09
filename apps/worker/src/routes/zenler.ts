@@ -85,15 +85,20 @@ function detectZenlerEvent(payload: any): string | null {
 
   // 2. Zenler course automation sends NO event field — detect from payload structure
   //    Fields are PascalCase: Email, Name, LastName, CourseName, CourseId, EnrollmentDate
+  //    IMPORTANT: check most-specific fields first (CompletedDate before CourseId)
   if (payload.Email || payload.email) {
-    if (payload.EnrollmentDate || payload.CourseId) return 'enrollment.created'
-    if (payload.CompletionDate || payload.CompletedAt) return 'course.completed'
-    if (payload.LessonName || payload.LessonId) return 'lesson.completed'
+    // Completion: has CompletedDate or CompletionDate
+    if (payload.CompletedDate || payload.CompletionDate || payload.CompletedAt) return 'course.completed'
+    // Certificate
     if (payload.CertificateUrl || payload.CertificateId) return 'certificate.issued'
+    // Quiz
     if (payload.QuizName || payload.QuizScore || payload.Score) return 'quiz.passed'
-    if (payload.TransactionId || payload.PaidAmount) return 'payment.received'
-    // Fallback: any payload with Email+CourseId is treated as enrollment
-    if (payload.CourseId || payload.CourseName) return 'enrollment.created'
+    // Lesson
+    if (payload.LessonName || payload.LessonId) return 'lesson.completed'
+    // Payment
+    if (payload.TransactionId || (payload.PaidAmount && payload.PaidAmount !== '')) return 'payment.received'
+    // Enrollment: has EnrollmentDate or CourseId (after ruling out completion above)
+    if (payload.EnrollmentDate || payload.CourseId || payload.CourseName) return 'enrollment.created'
     // Payload with just Email = user registration
     return 'user.registered'
   }
